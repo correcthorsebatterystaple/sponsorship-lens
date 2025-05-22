@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Search, X } from "lucide-react";
 import { useDebounce } from "use-debounce";
 import supabase from "./utils/supabase";
+import linkedinLogo from "./assets/linkedin.png";
 
 // Sample data - replace with your actual list
 const SAMPLE_ITEMS = [
@@ -58,6 +59,12 @@ const ResultItem: React.FC<ResultItemProps> = ({ item }) => {
   return (
     <div className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded cursor-pointer transition-colors flex items-center justify-between">
       <span>{item}</span>
+      <a
+        href={`https://www.linkedin.com/search/results/companies/?companyHqGeo=%5B"101165590"%5D&keywords=${item}`}
+        target="_blank"
+      >
+        <img src={linkedinLogo} alt="LinkedIn Logo" height="6px" width="16px" />
+      </a>
     </div>
   );
 };
