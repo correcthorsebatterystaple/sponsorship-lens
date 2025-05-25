@@ -82,8 +82,16 @@ const TotalResults: React.FC<TotalResultsProps> = ({ total, showing }) => {
   );
 };
 
-type ResultsListProps = { items: string[] | null; total: number | null };
-const ResultsList: React.FC<ResultsListProps> = ({ items, total }) => {
+type ResultsListProps = {
+  items: string[] | null;
+  total: number | null;
+  loading: boolean;
+};
+const ResultsList: React.FC<ResultsListProps> = ({ items, total, loading }) => {
+  if (loading) {
+    return "Loading...";
+  }
+
   return (
     <div className="space-y-1">
       {items !== null && <TotalResults total={total} showing={100} />}
@@ -97,12 +105,14 @@ const ResultsList: React.FC<ResultsListProps> = ({ items, total }) => {
 
 export default function MinimalistSearch() {
   const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState<number | null>(null);
   const [debouncedQuery] = useDebounce(query, 300);
   const [filteredItems, setFilteredItems] = useState<string[] | null>(null);
 
   useEffect(() => {
     const fetchOrgs = async () => {
+      setLoading(true);
       const { data, count, error } = await supabase
         .from("organisations")
         .select("name", { count: "estimated" })
@@ -111,6 +121,7 @@ export default function MinimalistSearch() {
         .range(0, 99);
 
       if (error) {
+        setLoading(false);
         console.error("Error fetching organisations:", error);
         return;
       }
@@ -118,6 +129,7 @@ export default function MinimalistSearch() {
       if (data?.length) {
         setFilteredItems(data.map((item) => item.name as string));
         setTotal(count);
+        setLoading(false);
       }
     };
 
@@ -129,7 +141,7 @@ export default function MinimalistSearch() {
     <div className="min-h-screen bg-white p-8 mx-auto">
       <div className="max-w-md mx-auto">
         <SearchInput query={query} onQueryChange={setQuery} />
-        <ResultsList items={filteredItems} total={total} />
+        <ResultsList items={filteredItems} total={total} loading={loading} />
       </div>
     </div>
   );
