@@ -35,7 +35,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ query, onQueryChange }) => {
 type ResultItemProps = { item: string };
 const ResultItem: React.FC<ResultItemProps> = ({ item }) => {
   return (
-    <div className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded cursor-pointer transition-colors flex items-center justify-between">
+    <div className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded transition-colors flex items-center justify-between">
       <span>{item}</span>
       <a
         href={`https://www.linkedin.com/search/results/companies/?companyHqGeo=%5B"101165590"%5D&keywords=${item}`}
