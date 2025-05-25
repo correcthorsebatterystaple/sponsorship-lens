@@ -4,28 +4,6 @@ import { useDebounce } from "use-debounce";
 import supabase from "./utils/supabase";
 import linkedinLogo from "./assets/linkedin.png";
 
-// Sample data - replace with your actual list
-const SAMPLE_ITEMS = [
-  "Apple",
-  "Banana",
-  "Cherry",
-  "Date",
-  "Elderberry",
-  "Fig",
-  "Grape",
-  "Honeydew",
-  "Kiwi",
-  "Lemon",
-  "Mango",
-  "Orange",
-  "Papaya",
-  "Quince",
-  "Raspberry",
-  "Strawberry",
-  "Tangerine",
-  "Watermelon",
-];
-
 type SearchInputProps = {
   query: string;
   onQueryChange: (query: string) => void;
