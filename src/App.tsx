@@ -1,147 +1,39 @@
-import React, { useEffect, useState } from "react";
-import { Search, X } from "lucide-react";
-import { useDebounce } from "use-debounce";
-import supabase from "./utils/supabase";
-import linkedinLogo from "./assets/linkedin.png";
+import { useState, type ChangeEvent } from "react";
+import { Loader } from "lucide-react";
+import { useDebouncedCallback } from "use-debounce";
+import { useFilteredOrgs } from "./hooks/use-filtered-orgs";
+import ResultsList from "./components/ResultsList";
+import SearchInput from "./components/SearchInput";
+import ServiceDescription from "./components/ServiceDescription";
 
-type SearchInputProps = {
-  query: string;
-  onQueryChange: (query: string) => void;
-};
-const SearchInput: React.FC<SearchInputProps> = ({ query, onQueryChange }) => {
-  return (
-    <div className=" mb-6 sticky top-4">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-      <input
-        autoFocus
-        type="text"
-        placeholder="Search..."
-        value={query}
-        onChange={(e) => onQueryChange(e.target.value)}
-        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-      />
-      {query && (
-        <button
-          onClick={() => onQueryChange("")}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      )}
-    </div>
-  );
-};
-
-type ResultItemProps = { item: string };
-const ResultItem: React.FC<ResultItemProps> = ({ item }) => {
-  return (
-    <div className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded transition-colors flex items-center justify-between">
-      <span>{item}</span>
-      <a
-        href={`https://www.linkedin.com/search/results/companies/?companyHqGeo=%5B"101165590"%5D&keywords=${item}`}
-        target="_blank"
-      >
-        <img src={linkedinLogo} alt="LinkedIn Logo" height="6px" width="16px" />
-      </a>
-    </div>
-  );
-};
-
-function EmptyState() {
-  return (
-    <div className="px-4 py-2 text-gray-400 text-center">No results found</div>
-  );
-}
-
-function ServiceDescription() {
-  return (
-    <div className="px-4 py-6 text-gray-600 text-center space-y-3">
-      <p className="text-lg font-medium text-gray-700">
-        Welcome to Sponsorship Lens
-      </p>
-      <p className="text-sm leading-relaxed">
-        Search through the official list of visa-sponsoring companies, published
-        by the government. We make it easy to query and explore this public data
-        to find the right sponsorship opportunities.
-      </p>
-      <p className="text-xs text-gray-500">
-        Currently available for UK companies only 🇬🇧
-      </p>
-    </div>
-  );
-}
-
-type TotalResultsProps = { total: number | null; showing: number };
-const TotalResults: React.FC<TotalResultsProps> = ({ total, showing }) => {
-  return (
-    <div className="px-4 py-2 text-gray-500 text-sm">
-      {total !== null
-        ? ` Showing top ${Math.min(showing, total)} of ${total} results found`
-        : "Loading..."}
-    </div>
-  );
-};
-
-type ResultsListProps = {
-  items: string[] | null;
-  total: number | null;
-  loading: boolean;
-};
-const ResultsList: React.FC<ResultsListProps> = ({ items, total, loading }) => {
-  if (loading) {
-    return "Loading...";
-  }
-
-  return (
-    <div className="space-y-1">
-      {items !== null && <TotalResults total={total} showing={100} />}
-      {items === null && <ServiceDescription />}
-      {items?.length === 0 && <EmptyState />}
-
-      {items?.map((item, index) => <ResultItem key={index} item={item} />)}
-    </div>
-  );
-};
-
-export default function MinimalistSearch() {
+export default function App() {
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [total, setTotal] = useState<number | null>(null);
-  const [debouncedQuery] = useDebounce(query, 300);
-  const [filteredItems, setFilteredItems] = useState<string[] | null>(null);
+  const { orgs, loading, count } = useFilteredOrgs(query);
 
-  useEffect(() => {
-    const fetchOrgs = async () => {
-      setLoading(true);
-      const { data, count, error } = await supabase
-        .from("organisations")
-        .select("name", { count: "estimated" })
-        .ilike("name", `%${debouncedQuery}%`)
-        .limit(100)
-        .range(0, 99);
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
+    setQuery(e.target.value);
+  const handleCancel = () => setQuery("");
 
-      if (error) {
-        setLoading(false);
-        console.error("Error fetching organisations:", error);
-        return;
-      }
-
-      if (data?.length) {
-        setFilteredItems(data.map((item) => item.name as string));
-        setTotal(count);
-        setLoading(false);
-      }
-    };
-
-    if (debouncedQuery === "") setFilteredItems(null);
-    else fetchOrgs();
-  }, [debouncedQuery]);
+  const debouncedHandleChange = useDebouncedCallback(handleChange, 300);
 
   return (
     <div className="min-h-screen bg-white p-8 mx-auto">
-      <div className="max-w-md mx-auto">
-        <SearchInput query={query} onQueryChange={setQuery} />
-        <ResultsList items={filteredItems} total={total} loading={loading} />
+      <div className="max-w-lg mx-auto">
+        <SearchInput
+          query={query}
+          onChange={debouncedHandleChange}
+          onCancel={handleCancel}
+        />
+
+        {query.length === 0 && <ServiceDescription />}
+
+        {loading && (
+          <Loader className="mx-auto my-4 h-6 w-6 animate-spin text-gray-500" />
+        )}
+
+        {query.length > 0 && !loading && (
+          <ResultsList items={orgs ?? []} total={count ?? -1} />
+        )}
       </div>
     </div>
   );
