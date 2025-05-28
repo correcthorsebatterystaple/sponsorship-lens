@@ -1,4 +1,4 @@
-import linkedinLogo from "../assets/linkedin-logo.svg";
+import linkedinLogo from "../assets/linkedin.png";
 
 type ResultItemProps = { item: string };
 const ResultItem: React.FC<ResultItemProps> = ({ item }) => {
