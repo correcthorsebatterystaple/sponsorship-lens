@@ -43,7 +43,7 @@ async function upsertOrganisations(organisations: Record<string, string>[]) {
   console.log(`Upserted ${values.length} organisations successfully.`);
 }
 
-async function addIngestLog(url) {
+async function insertIngestLog(url: string) {
   console.log("Adding ingest log...");
 
   const pool = new Pool({ connectionString: process.env.DB_CONN_STRING });
@@ -95,7 +95,7 @@ async function main() {
     .pipe(csv())
     .on("data", (data: Record<string, string>) => results.push(data))
     .on("end", () =>
-      upsertOrganisations(results).then(() => addIngestLog(csvUrl)),
+      upsertOrganisations(results).then(() => insertIngestLog(csvUrl)),
     );
 }
 
