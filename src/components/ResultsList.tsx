@@ -1,3 +1,6 @@
+import ResultItem from "./ResultItem";
+import ResultsSummary from "./ResultsSummary";
+
 type ResultsListProps = {
   items: string[];
   total: number;
