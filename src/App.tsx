@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { Loader } from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
 import { useFilteredOrgs } from "./hooks/use-filtered-orgs";
@@ -7,7 +7,10 @@ import SearchInput from "./components/SearchInput";
 import ServiceDescription from "./components/ServiceDescription";
 
 export default function App() {
-  const [query, setQuery] = useState("");
+  const params = new URLSearchParams(window.location.search.slice(1));
+  const q = params.get("q");
+
+  const [query, setQuery] = useState(q ?? "");
   const { orgs, loading, count } = useFilteredOrgs(query);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
@@ -15,6 +18,10 @@ export default function App() {
   const handleCancel = () => setQuery("");
 
   const debouncedHandleChange = useDebouncedCallback(handleChange, 300);
+
+  useEffect(() => {
+    window.history.replaceState(null, "", `?q=${query}`);
+  }, [query]);
 
   return (
     <div className="min-h-screen bg-white p-8 mx-auto">
