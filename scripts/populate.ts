@@ -5,6 +5,10 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import { Readable } from "stream";
 
+const pool = new Pool({
+  connectionString: process.env.DB_CONN_STRING,
+});
+
 async function upsertOrganisations(organisations: Record<string, string>[]) {
   console.log("Upserting organisations...");
 
@@ -25,7 +29,6 @@ async function upsertOrganisations(organisations: Record<string, string>[]) {
     values,
   );
 
-  const pool = new Pool({ connectionString: process.env.DB_CONN_STRING });
   const client = await pool.connect();
 
   await client.query("BEGIN");
@@ -37,7 +40,6 @@ async function upsertOrganisations(organisations: Record<string, string>[]) {
     throw e;
   } finally {
     client.release();
-    pool.end();
   }
 
   console.log(`Upserted ${values.length} organisations successfully.`);
@@ -46,7 +48,6 @@ async function upsertOrganisations(organisations: Record<string, string>[]) {
 async function insertIngestLog(url: string) {
   console.log("Adding ingest log...");
 
-  const pool = new Pool({ connectionString: process.env.DB_CONN_STRING });
   const client = await pool.connect();
 
   await client.query("BEGIN");
@@ -58,7 +59,6 @@ async function insertIngestLog(url: string) {
     throw e;
   } finally {
     client.release();
-    pool.end();
   }
 
   console.log("Ingest log added successfully.");
@@ -95,7 +95,9 @@ async function main() {
     .pipe(csv())
     .on("data", (data: Record<string, string>) => results.push(data))
     .on("end", () =>
-      upsertOrganisations(results).then(() => insertIngestLog(csvUrl)),
+      upsertOrganisations(results)
+        .then(() => insertIngestLog(csvUrl))
+        .then(() => pool.end()),
     );
 }
 
