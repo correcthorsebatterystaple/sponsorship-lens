@@ -64,6 +64,8 @@ async function insertIngestLog(url: string) {
   console.log("Ingest log added successfully.");
 }
 
+async function processCsvData(csvData: Record<string, string>[]) {}
+
 async function main() {
   console.log("Downloading latest CSV...");
 
@@ -91,14 +93,18 @@ async function main() {
   });
 
   const results: Record<string, string>[] = [];
-  fileStream.data
-    .pipe(csv())
-    .on("data", (data: Record<string, string>) => results.push(data))
-    .on("end", () =>
-      upsertOrganisations(results)
-        .then(() => insertIngestLog(csvUrl))
-        .then(() => pool.end()),
-    );
+
+  await new Promise((resolve, reject) => {
+    fileStream.data
+      .pipe(csv())
+      .on("data", (data: Record<string, string>) => results.push(data))
+      .on("end", resolve)
+      .on("error", reject);
+  });
+
+  await upsertOrganisations(results);
+  await insertIngestLog(csvUrl);
+  await pool.end();
 }
 
 main();
