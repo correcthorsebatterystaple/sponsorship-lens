@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
 import supabase from "../utils/supabase";
 
+export type Organisation = {
+  name: string;
+  city?: string;
+  type_and_rating?: string;
+  route?: string;
+};
+
 export const useFilteredOrgs = (query: string) => {
-  const [orgs, setFilteredOrgs] = useState<string[]>([]);
+  const [orgs, setFilteredOrgs] = useState<Organisation[]>([]);
   const [loading, setLoading] = useState(false);
   const [count, setCount] = useState<number | null>(null);
 
@@ -10,7 +17,7 @@ export const useFilteredOrgs = (query: string) => {
     const fetchOrgs = async () => {
       const { data, count, error } = await supabase
         .from("organisations")
-        .select("name", { count: "estimated" })
+        .select("name,city,type_and_rating,route", { count: "estimated" })
         .ilike("name", `%${query}%`)
         .limit(100)
         .range(0, 99);
@@ -21,7 +28,7 @@ export const useFilteredOrgs = (query: string) => {
         return null;
       }
 
-      setFilteredOrgs(data.map((org) => org.name));
+      setFilteredOrgs(data);
       setCount(count);
 
       return { data, count };
